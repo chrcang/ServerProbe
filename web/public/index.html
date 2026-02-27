@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务器探针</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>服务器探针</h1>
+        </div>
+        <div class="header-right">
+            <button id="btnTheme" class="btn btn-ghost" title="切换主题">💻</button>
+            <button id="btnPassword" class="btn btn-ghost"><i class="ri-lock-password-line"></i>修改密码</button>
+            <button id="btnLogout" class="btn btn-ghost"><i class="ri-logout-box-r-line"></i>退出</button>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="toolbar">
+            <div class="stats-bar">
+                <div class="stat-item stat-active" data-filter="all">
+                    总数 <span class="stat-badge" id="statTotal">0</span>
+                </div>
+                <div class="stat-item" data-filter="online">
+                    在线 <span class="stat-badge stat-badge-success" id="statOnline">0</span>
+                </div>
+                <div class="stat-item" data-filter="offline">
+                    离线 <span class="stat-badge stat-badge-danger" id="statOffline">0</span>
+                </div>
+            </div>
+            <div class="toolbar-right">
+                <div class="view-toggle">
+                    <button id="btnGridView" class="btn btn-ghost view-btn view-active" title="卡片视图"><i class="ri-layout-grid-line"></i></button>
+                    <button id="btnListView" class="btn btn-ghost view-btn" title="列表视图"><i class="ri-list-check"></i></button>
+                </div>
+                <button id="btnAdd" class="btn btn-primary"><i class="ri-add-line"></i>添加服务器</button>
+            </div>
+        </div>
+        <div id="serverGrid" class="server-grid"></div>
+        <div id="emptyState" class="empty-state hidden">
+            <p>暂无监控服务器</p>
+            <p>点击「添加服务器」开始</p>
+        </div>
+    </main>
+
+    <!-- 添加服务器 -->
+    <div id="addModal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <h2>添加服务器</h2>
+            <form id="addForm">
+                <div class="form-group">
+                    <label for="serverName">服务器名称</label>
+                    <input type="text" id="serverName" placeholder="例：生产服务器-1" required>
+                </div>
+                <div class="form-group">
+                    <label for="serverUrl">API 地址</label>
+                    <input type="url" id="serverUrl" placeholder="https://example.com/api/metrics" required>
+                </div>
+                <div id="addError" class="error-msg hidden"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost modal-cancel">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 修改密码 -->
+    <div id="pwdModal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <h2>修改密码</h2>
+            <form id="pwdForm">
+                <div class="form-group">
+                    <label for="oldPwd">当前密码</label>
+                    <input type="password" id="oldPwd" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPwd">新密码（至少6位）</label>
+                    <input type="password" id="newPwd" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPwd">确认新密码</label>
+                    <input type="password" id="confirmPwd" required minlength="6">
+                </div>
+                <div id="pwdError" class="error-msg hidden"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost modal-cancel">取消</button>
+                    <button type="submit" class="btn btn-primary">确认修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
