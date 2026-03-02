@@ -18,6 +18,61 @@
 
     function formatSpeed(b) { return formatBytes(b) + '/s'; }
 
+    function pad2(n) {
+        return String(n).padStart(2, '0');
+    }
+
+    function isValidDateString(dateStr) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+        var parts = dateStr.split('-');
+        var y = Number(parts[0]);
+        var m = Number(parts[1]);
+        var d = Number(parts[2]);
+        var date = new Date(y, m - 1, d);
+        return !isNaN(date.getTime())
+            && date.getFullYear() === y
+            && date.getMonth() === m - 1
+            && date.getDate() === d;
+    }
+
+    function normalizeDateString(val) {
+        if (!val) return '';
+        var text = String(val).trim();
+        var m = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (m) {
+            var dateOnly = m[1] + '-' + m[2] + '-' + m[3];
+            return isValidDateString(dateOnly) ? dateOnly : '';
+        }
+
+        var date = new Date(text);
+        if (isNaN(date.getTime())) return '';
+        var normalized = date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate());
+        return isValidDateString(normalized) ? normalized : '';
+    }
+
+    function getRemainingDays(dateStr) {
+        if (!isValidDateString(dateStr)) return null;
+        var parts = dateStr.split('-');
+        var target = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        target.setHours(0, 0, 0, 0);
+
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        return Math.ceil((target.getTime() - today.getTime()) / 86400000);
+    }
+
+    function formatExpiresAt(val) {
+        var dateStr = normalizeDateString(val);
+        if (!dateStr) return '';
+
+        var days = getRemainingDays(dateStr);
+        if (days === null) return dateStr;
+        if (days > 0) return dateStr + '（剩余 ' + days + ' 天）';
+        if (days === 0) return dateStr + '（今日到期）';
+        return dateStr + '（已过期 ' + Math.abs(days) + ' 天）';
+    }
+
     function perfLevel(v) {
         if (v >= 80) return 'perf-high';
         if (v >= 60) return 'perf-mid';
@@ -83,6 +138,11 @@
         emptyEl.classList.add('hidden');
 
         gridEl.innerHTML = servers.map(function (s) {
+            var expiresAtText = formatExpiresAt(s.expiresAt);
+            var detailHtml = expiresAtText
+                ? '<div class="info-detail">到期 ' + esc(expiresAtText) + '</div>'
+                : '<div class="info-detail">--</div>';
+
             return '<div class="server-card" id="card-' + s.id + '">'
                 + '<div class="card-header">'
                 +   '<h3><i class="ri-server-line"></i>' + esc(s.name) + '</h3>'
@@ -90,7 +150,7 @@
                 + '</div>'
                 + '<div class="card-body">'
                 +   '<div class="info-tags"><span class="tag">--</span></div>'
-                +   '<div class="info-details"><div class="info-detail">--</div></div>'
+                +   '<div class="info-details">' + detailHtml + '</div>'
                 +   '<div class="perf-section">'
                 +     perfBarHtml('CPU', 'cpu', 0, '')
                 +     perfBarHtml('内存', 'mem', 0, '')
@@ -218,6 +278,8 @@
             var detailsEl = card.querySelector('.info-details');
             detailsEl.innerHTML = '';
             var lines = [];
+            var expiresAtText = formatExpiresAt(s.expiresAt);
+            if (expiresAtText) lines.push('到期 ' + expiresAtText);
             if (m.uptime) lines.push('运行 ' + m.uptime);
             if (m.cpuInfo) lines.push(m.cpuInfo);
             if (m.load) lines.push('负载 ' + m.load);
@@ -294,10 +356,21 @@
 
         var name = document.getElementById('serverName').value.trim();
         var url = document.getElementById('serverUrl').value.trim();
+        var expiresAtInput = document.getElementById('serverExpiresAt').value.trim();
+        var expiresAt = null;
+
+        if (expiresAtInput) {
+            if (!isValidDateString(expiresAtInput)) {
+                errEl.textContent = '到期日期格式无效';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            expiresAt = expiresAtInput;
+        }
 
         api('/api/servers', {
             method: 'POST',
-            body: JSON.stringify({ name: name, url: url })
+            body: JSON.stringify({ name: name, url: url, expiresAt: expiresAt })
         }).then(function () {
             closeModal('addModal');
             loadServers();
